@@ -64,12 +64,6 @@ class Note extends Component {
             <p className="note-title-input">{note.title}</p> }
           </div>
           <div className="note-textarea-container">
-            {/*<textarea
-              className="note-textarea"
-              placeholder="Type Here..."
-              defaultValue={note.content}
-              ref={(input) => this.content = input}
-            />*/}
             { type && type === "edit" ?
             <SimpleMDE
                id="your-custom-id"

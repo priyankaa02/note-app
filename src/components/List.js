@@ -4,7 +4,6 @@ import NoteCard from './NoteCard';
 class List extends Component {
 
   componentWillMount() {
-    console.log("fvfvfv",this.props.categoryName)
     if (this.props.categoryName !== "All Notes") {
       setTimeout(function() {
         const formData = {
