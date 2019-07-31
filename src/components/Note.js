@@ -86,7 +86,7 @@ class Note extends Component {
               className="note-textarea"
               dangerouslySetInnerHTML={this.createMarkup()}/> }
           </div>
-          { type && type === "edit" && <input className="note-button" type="submit" value="Submit" /> }
+          { type && type === "edit" && <input className="note-button" type="submit" value="Save" /> }
         </form>
       </div>
     );
