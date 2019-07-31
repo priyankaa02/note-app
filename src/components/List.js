@@ -4,7 +4,18 @@ import NoteCard from './NoteCard';
 class List extends Component {
 
   componentWillMount() {
-    this.props.getNotes();
+    console.log("fvfvfv",this.props.categoryName)
+    if (this.props.categoryName !== "All Notes") {
+      setTimeout(function() {
+        const formData = {
+          notesIds: this.props.category.notes
+        };
+        this.props.getMoreNotes(formData)
+      }.bind(this), 1000)
+    }
+    else {
+      this.props.getNotes();
+    }
   }
 
   render() {

@@ -19,7 +19,8 @@ class App extends Component {
       error: '',
       type: '',
       searchString: '',
-      categories: []
+      categories: [],
+      categoryName: 'All Notes'
     };
   }
 
@@ -68,9 +69,19 @@ class App extends Component {
     .catch((err) => console.log(err.response.data) );
   }
 
+  changeCategory = (name) => {
+    this.setState({categoryName: name})
+  }
+
   getNote = (id,type) => {
     axios.get(urlFor(`notes/${id}`))
-    .then((res) => this.setState({note: res.data, showNote: true, type: type }) )
+    .then((res) => {
+      if ( type === "not"){
+        this.setState({note: res.data })
+      } else {
+        this.setState({note: res.data, showNote: true, type: type })
+      }
+    })
     .catch((err) => console.log(err.response.data) );
   }
 
@@ -95,9 +106,18 @@ class App extends Component {
   }
 
   submitNote = (data,id) => {
-    console.log(data,id)
     this.performSubmissionRequest(data,id)
-    .then((res) => this.setState({ showNote: false }) )
+    .then((res) => {
+      if (data.category) {
+        this.setState({ note: res.data })
+        setTimeout(function() {
+          this.setState({ showNote: false })
+        }.bind(this), 2000)
+      }
+      else {
+        this.setState({ showNote: false })
+      }
+    })
     .catch((err) => {
       const { errors } = err.response.data;
       if (errors) {
@@ -120,7 +140,10 @@ class App extends Component {
     .then((res) => {
       if (this.state.category && this.state.category.notes) {
         if (res.data.notes.length === this.state.category.notes.length) {
-        this.setState({ error: "note already exists in this category" });
+          this.setState({ error: "note already exists in this category" });
+       }
+       else {
+          this.setState({category: res.data})
        }
      }
     })
@@ -133,6 +156,12 @@ class App extends Component {
   }
 
   deleteNote = (id) => {
+    this.getNote(id,"not")
+    setTimeout(function() {
+      for ( let i = 0; i < this.state.note.categories.length ; i++ ){
+        this.deleteNoteFromcategory(this.state.note.categories[i],id)
+      }
+    }.bind(this), 2000)
     const newNotesState = this.state.notes.filter((note) => note._id !== id );
     axios.delete(urlFor(`notes/${id}`) )
     .then((res) => this.setState({ notes: newNotesState }) )
@@ -140,37 +169,34 @@ class App extends Component {
   }
 
   deleteCategory = (id) => {
+    this.getCategory(id)
+    setTimeout(function() {
+      for ( let i = 0; i < this.state.category.notes.length ; i++ ){
+        this.deleteCategoryFromNote(this.state.category.notes[i],id)
+      }
+    }.bind(this), 2000)
     const newCategoryState = this.state.categories.filter((category) => category._id !== id );
     axios.delete(urlFor(`categories/${id}`) )
     .then((res) => this.setState({ categories: newCategoryState }) )
     .catch((err) => console.log(err.response.data) );
   }
 
-  showTagForm = () => {
-    this.setState({ newTag: true });
+  deleteNoteFromcategory = (id,noteId) => {
+    const data = {
+      noteId: noteId
+    };
+    axios.put(urlFor(`categories/deletenote/${id}`), data)
+    .then((res) => this.setState({category: res.data}) )
+    .catch((err) => console.log(err.response.data) );
   }
 
-  closeTagForm = () => {
-    this.setState({ newTag: false });
-  }
-
-  submitTag = (data, noteId) => {
-    axios.post(urlFor(`notes/${noteId}/tags`), data)
-    .then((res) => this.getNote(noteId) )
-    .catch((err) => {
-      const { errors } = err.response.data;
-      if (errors.name) {
-        this.setState({ error: "Missing Tag Name!" })
-      } else if (errors.title) {
-
-      }
-    });
-  }
-
-  deleteTag = (noteId, id) => {
-    axios.delete(urlFor(`/tags/${id}`))
-    .then((res) => this.getNote(noteId) )
-    .catch((err) => console.log(err.response.body))
+  deleteCategoryFromNote = (id,categoryId) => {
+    const data = {
+      categoryId: categoryId
+    };
+    axios.put(urlFor(`notes/deletecategory/${id}`), data)
+    .then((res) => this.setState({note: res.data}) )
+    .catch((err) => console.log(err.response.data) );
   }
 
   resetError = () => {
@@ -178,30 +204,33 @@ class App extends Component {
   }
 
   render() {
-    const { showNote, notes, categories, note, category, type, newTag, error } = this.state;
+    const { showNote, notes, categoryName, categories, note, category, type, error } = this.state;
 
     return (
       <div className="App">
-        <Nav toggleNote={this.toggleNote} getNotes={this.getNotes} getMoreNotes={this.getMoreNotes} getCategory={this.getCategory} category={category} error={error} note={note} showNote={showNote} submitCategory={this.submitCategory} deleteCategory={this.deleteCategory} notes={notes} categories={categories} getCategories={this.getCategories} handleChange={this.handleChange}/>
+        <Nav toggleNote={this.toggleNote} changeCategory={this.changeCategory} type={type} submitNote={this.submitNote} getNotes={this.getNotes} getMoreNotes={this.getMoreNotes} getCategory={this.getCategory} category={category} error={error} note={note} showNote={showNote} submitCategory={this.submitCategory} deleteCategory={this.deleteCategory} notes={notes} categories={categories} getCategories={this.getCategories} handleChange={this.handleChange}/>
         {error && <Flash error={error} resetError={this.resetError} />}
         <br />
         { showNote ?
             <Note
               note={note}
-              newTag={newTag}
               type={type}
+              categoryName={categoryName}
+              error={error}
+              category={category}
               submitNote={this.submitNote}
-              showTagForm={this.showTagForm}
-              closeTagForm={this.closeTagForm}
-              submitTag={this.submitTag}
-              deleteTag={this.deleteTag}
+              submitCategory={this.submitCategory}
+
             />
             :
             <List
               getNotes={this.getNotes}
               notes={notes}
               getNote={this.getNote}
+              categoryName={categoryName}
               deleteNote={this.deleteNote}
+              getMoreNotes={this.getMoreNotes}
+              category={category}
             /> }
       </div>
     );

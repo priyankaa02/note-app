@@ -39,6 +39,12 @@ class Nav extends Component {
       noteId: this.props.note._id
     };
     this.props.submitCategory(formData,id);
+    const data = {
+      title: this.props.note.title,
+      content: this.props.note.content,
+      categoryId: id
+    }
+    this.props.submitNote(data, this.props.note._id);
     // document.getElementById("category").style.display = "none"
     setTimeout(function() {
       if (this.props.error === '') {
@@ -52,6 +58,7 @@ class Nav extends Component {
 
   onChange(e,name,id) {
     e.preventDefault();
+    this.props.changeCategory(name)
     this.setState({text: name,id: id})
     this.props.getCategory(id)
     setTimeout(function() {
@@ -63,12 +70,14 @@ class Nav extends Component {
   }
 
   onAllChange(e) {
+    this.props.changeCategory("All Notes")
+    // this.props.toggleNote()
     this.setState({text: "All Notes"})
     this.props.getNotes();
   }
 
   render() {
-    const { toggleNote, showNote, handleChange, categories, deleteCategory } = this.props;
+    const { toggleNote, showNote, type, handleChange, categories, deleteCategory } = this.props;
     let category
     if (showNote) {
       category = categories.map((category, index) => {
@@ -78,9 +87,11 @@ class Nav extends Component {
       });
     } else {
       category = categories.map((category, index) => {
-        return (
-          <span><a href="#" onClick={(e) => this.onChange(e,category.name,category._id)}>{category.name}<span style={{fontSize: "20px",color: "grey",marginLeft: '20px'}}>{category.notes.length}</span></a><i className="material-icons" style={{height: 6,color: "grey"}} onClick={() => deleteCategory(category._id)}>delete</i></span>
-        );
+        if ( this.state.text !== category.name ) {
+          return (
+            <span><a href="#" onClick={(e) => this.onChange(e,category.name,category._id)}>{category.name}<span style={{fontSize: "20px",color: "grey",marginLeft: '20px'}}>{category.notes.length}</span></a><i className="material-icons" style={{height: 6,color: "grey"}} onClick={() => deleteCategory(category._id)}>delete</i></span>
+          );
+        }
       });
     }
 
@@ -88,7 +99,7 @@ class Nav extends Component {
       <div className="nav-container">
        { showNote ?
          <div>
-         { category.length > 0 && <div className="dropdown">
+         { category.length > 0 && type !== 'edit' && <div className="dropdown">
            <button className="dropbtn">Move To
              <i className="material-icons">arrow_drop_down</i>
            </button>
@@ -105,7 +116,7 @@ class Nav extends Component {
           <div className="dropdown-content">
             { this.state.text !== 'All Notes' && <div onClick={(e) => this.onAllChange(e)}><a>All Notes</a></div>}
             <div>{category}</div>
-            <a href="#" onClick={() => { document.getElementById("myForm").style.display = "block" }}>{'+ Add Category'}</a>
+            { this.state.text === 'All Notes' && <a href="#" onClick={() => { document.getElementById("myForm").style.display = "block" }}>{'+ Add Category'}</a>}
             <div className="form-popup" id="myForm">
               <form onSubmit={(e) => this.onSubmit(e)} className="form-container">
                 <input type="text" placeholder="Enter category" name="email" ref={(input) => this.name = input} required/>
